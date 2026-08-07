@@ -12,7 +12,7 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" Background="#172033" Padding="24,18">
-            <DockPanel>
+            <DockPanel LastChildFill="False">
                 <StackPanel DockPanel.Dock="Left">
                     <TextBlock Text="Excel Compare" Foreground="White" FontSize="23" FontWeight="SemiBold"/>
                     <TextBlock Text="Clear, private workbook differences — entirely on this computer" Foreground="#BFC9DA" Margin="0,3,0,0"/>
@@ -103,7 +103,7 @@
             <TabItem x:Name="ResultsTab" Header="  3  Review results  " IsEnabled="False">
                 <Grid Margin="24">
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                    <DockPanel Margin="0,0,0,15">
+                    <DockPanel Margin="0,0,0,15" LastChildFill="False">
                         <StackPanel DockPanel.Dock="Left">
                             <TextBlock Text="Comparison results" FontSize="24" FontWeight="SemiBold"/>
                             <TextBlock x:Name="ResultSubtitle" Foreground="{StaticResource Muted}" Margin="0,4,0,0"/>
@@ -170,8 +170,8 @@
         </TabControl>
 
         <Border Grid.Row="2" Background="White" BorderBrush="#DDE3ED" BorderThickness="0,1,0,0" Padding="18,10">
-            <DockPanel>
-                <TextBlock x:Name="StatusText" Text="Ready" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+            <DockPanel LastChildFill="False">
+                <TextBlock x:Name="StatusText" DockPanel.Dock="Left" Text="Ready" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
                 <TextBlock DockPanel.Dock="Right" Text="Offline • Read-only sources • .xlsx" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
             </DockPanel>
         </Border>

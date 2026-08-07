@@ -2,6 +2,12 @@
 
 Excel Compare is an offline Windows desktop tool for comparing one table from two `.xlsx` workbooks. It matches rows by business keys instead of row position, presents an accessible interactive review, and exports a shareable Excel report.
 
+![Excel Compare showing an employee roster comparison with changed, added, removed, and unchanged rows](docs/images/excel-compare-demo.png)
+
+## Try the demo
+
+Download the [older employee roster](outputs/readme-demo/employee-roster-old.xlsx) and [newer employee roster](outputs/readme-demo/employee-roster-new.xlsx), then select `Employee ID` as the row key. The comparison contains five changed rows, two additions, one removal, and four unchanged rows.
+
 ## Use
 
 1. Run `ExcelDiff.exe`.

@@ -2,6 +2,9 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using ExcelDiff.Models;
 using ExcelDiff.Services;
 using Microsoft.Win32;
@@ -26,6 +29,100 @@ public partial class MainWindow : Window
         DataContext = this;
         FieldFilter.Items.Add("All fields");
         FieldFilter.SelectedIndex = 0;
+        Loaded += MainWindow_Loaded;
+    }
+
+    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        var arguments = Environment.GetCommandLineArgs().Skip(1).ToArray();
+        var demoIndex = Array.FindIndex(arguments, value => string.Equals(value, "--demo", StringComparison.OrdinalIgnoreCase));
+        if (demoIndex < 0) return;
+        if (demoIndex + 2 >= arguments.Length)
+        {
+            MessageBox.Show(this, "Demo mode requires paths to the older and newer .xlsx workbooks.", "Invalid demo command", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        var screenshotIndex = Array.FindIndex(arguments, value => string.Equals(value, "--screenshot", StringComparison.OrdinalIgnoreCase));
+        var screenshotPath = screenshotIndex >= 0 && screenshotIndex + 1 < arguments.Length ? arguments[screenshotIndex + 1] : null;
+        await LoadDemoAsync(arguments[demoIndex + 1], arguments[demoIndex + 2], screenshotPath);
+    }
+
+    private async Task LoadDemoAsync(string oldPath, string newPath, string? screenshotPath)
+    {
+        _cancellation = new CancellationTokenSource();
+        SetBusy(true, "Loading the demo comparison…");
+        try
+        {
+            var oldSheets = _reader.GetSheetNames(oldPath);
+            var newSheets = _reader.GetSheetNames(newPath);
+            if (oldSheets.Count == 0 || newSheets.Count == 0) throw new InvalidDataException("The demo workbooks must contain at least one worksheet.");
+
+            OldFileText.Text = oldPath;
+            NewFileText.Text = newPath;
+            OldSheetCombo.ItemsSource = oldSheets;
+            NewSheetCombo.ItemsSource = newSheets;
+            OldSheetCombo.SelectedIndex = 0;
+            NewSheetCombo.SelectedIndex = 0;
+            OldHeaderRowText.Text = "1";
+            NewHeaderRowText.Text = "1";
+
+            _oldData = await Task.Run(() => _reader.ReadSheet(oldPath, oldSheets[0], 1, _cancellation.Token));
+            _newData = await Task.Run(() => _reader.ReadSheet(newPath, newSheets[0], 1, _cancellation.Token));
+            BuildMappings(_oldData, _newData);
+            var keyMapping = Mappings.FirstOrDefault(mapping => NormalizeHeader(mapping.OldHeader) == "EMPLOYEE ID" && mapping.NewColumn is not null)
+                ?? Mappings.FirstOrDefault(mapping => mapping.NewColumn is not null)
+                ?? throw new InvalidDataException("The demo workbooks do not have any matching fields.");
+            keyMapping.IsKey = true;
+
+            var configuration = new ComparisonConfiguration(oldPath, newPath, _oldData.SheetName, _newData.SheetName, 1, 1, Mappings.ToArray(), false);
+            _result = await Task.Run(() => _engine.Compare(_oldData, _newData, configuration, _cancellation.Token));
+            MappingTab.IsEnabled = true;
+            ResultsTab.IsEnabled = true;
+            ShowResults(_result);
+            WorkflowTabs.SelectedItem = ResultsTab;
+            StatusText.Text = $"Demo loaded • Compared {_result.Summary.Total:N0} rows";
+
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            ResultsGrid.SelectedIndex = ResultsGrid.Items.Count > 0 ? 0 : -1;
+            if (ResultsGrid.SelectedItem is not null) ResultsGrid.ScrollIntoView(ResultsGrid.SelectedItem);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+            if (!string.IsNullOrWhiteSpace(screenshotPath))
+            {
+                StatusText.Text = $"Demo loaded • Screenshot saved • Compared {_result.Summary.Total:N0} rows";
+                SetBusy(false);
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+                CaptureApplicationContent(screenshotPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowFriendlyError("The demo comparison could not be loaded", ex);
+        }
+        finally
+        {
+            SetBusy(false);
+            _cancellation.Dispose();
+            _cancellation = null;
+        }
+    }
+
+    private void CaptureApplicationContent(string outputPath)
+    {
+        if (Content is not Visual visual || Content is not FrameworkElement contentElement)
+            throw new InvalidOperationException("The application content is not ready to capture.");
+        contentElement.UpdateLayout();
+        var dpi = VisualTreeHelper.GetDpi(contentElement);
+        var pixelWidth = Math.Max(1, (int)Math.Ceiling(contentElement.ActualWidth * dpi.DpiScaleX));
+        var pixelHeight = Math.Max(1, (int)Math.Ceiling(contentElement.ActualHeight * dpi.DpiScaleY));
+        var bitmap = new RenderTargetBitmap(pixelWidth, pixelHeight, 96 * dpi.DpiScaleX, 96 * dpi.DpiScaleY, PixelFormats.Pbgra32);
+        bitmap.Render(visual);
+        var directory = Path.GetDirectoryName(Path.GetFullPath(outputPath));
+        if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None);
+        encoder.Save(stream);
     }
 
     private void BrowseOld_Click(object sender, RoutedEventArgs e) => BrowseWorkbook(OldFileText, OldSheetCombo);
