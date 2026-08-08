@@ -5,7 +5,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>ExcelDiff</AssemblyName>
     <RootNamespace>ExcelDiff</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>0.1.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.1" />
