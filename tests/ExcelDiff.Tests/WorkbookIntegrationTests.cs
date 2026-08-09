@@ -29,13 +29,45 @@ public sealed class WorkbookIntegrationTests : IDisposable
             workbook.SaveAs(path);
         }
 
-        var reader = new OpenXmlWorkbookReader();
+        var reader = new WorkbookReader();
         var sheet = reader.ReadSheet(path, "People", 1, CancellationToken.None);
 
         Assert.Equal(["ID", "Name", "Started"], sheet.Headers.Select(h => h.Name));
         Assert.Equal(CellValueKind.Number, sheet.Rows[0].CellAt(0).Kind);
         Assert.Equal("林怡君", sheet.Rows[0].CellAt(1).DisplayValue);
         Assert.Equal(CellValueKind.Date, sheet.Rows[0].CellAt(2).Kind);
+    }
+
+    [Fact]
+    public void Reader_LoadsLegacyXlsWithoutExcelInstalled()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "10x10.xls");
+        var reader = new WorkbookReader();
+
+        var sheets = reader.GetSheetNames(path);
+        var sheet = reader.ReadSheet(path, sheets[0], 1, CancellationToken.None);
+
+        Assert.NotEmpty(sheets);
+        Assert.Equal(9, sheet.Headers.Count);
+        Assert.Equal(9, sheet.Rows.Count);
+        Assert.NotEqual(CellValueKind.Blank, sheet.Rows[0].CellAt(0).Kind);
+        Assert.Contains(sheet.ReadIssues, issue => issue.Category == "Legacy workbook");
+    }
+
+    [Fact]
+    public void Reader_PreservesLegacyXlsValueTypes()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "NumDoubleDateBoolString.xls");
+        var reader = new WorkbookReader();
+        var sheetName = reader.GetSheetNames(path)[0];
+
+        var sheet = reader.ReadSheet(path, sheetName, 1, CancellationToken.None);
+        var kinds = sheet.Rows.SelectMany(row => row.Cells).Select(cell => cell.Kind).ToHashSet();
+
+        Assert.Contains(CellValueKind.Text, kinds);
+        Assert.Contains(CellValueKind.Number, kinds);
+        Assert.Contains(CellValueKind.Date, kinds);
+        Assert.Contains(CellValueKind.Boolean, kinds);
     }
 
     [Fact]

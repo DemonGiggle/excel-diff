@@ -26,7 +26,7 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="32" MaxWidth="980">
                         <TextBlock Text="Choose the two workbooks" FontSize="24" FontWeight="SemiBold"/>
-                        <TextBlock Text="Your files stay on this computer and are opened read-only. Only modern .xlsx workbooks are accepted." Foreground="{StaticResource Muted}" Margin="0,6,0,22"/>
+                        <TextBlock Text="Your files stay on this computer and are opened read-only. Modern .xlsx and legacy .xls workbooks are accepted." Foreground="{StaticResource Muted}" Margin="0,6,0,22"/>
 
                         <Border BorderBrush="#DDE3ED" BorderThickness="1" CornerRadius="6" Padding="18" Margin="0,0,0,14">
                             <Grid>
@@ -172,7 +172,7 @@
         <Border Grid.Row="2" Background="White" BorderBrush="#DDE3ED" BorderThickness="0,1,0,0" Padding="18,10">
             <DockPanel LastChildFill="False">
                 <TextBlock x:Name="StatusText" DockPanel.Dock="Left" Text="Ready" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
-                <TextBlock DockPanel.Dock="Right" Text="Offline • Read-only sources • .xlsx" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                <TextBlock DockPanel.Dock="Right" Text="Offline • Read-only sources • .xlsx / .xls" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
             </DockPanel>
         </Border>
 

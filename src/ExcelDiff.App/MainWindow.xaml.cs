@@ -13,7 +13,7 @@ namespace ExcelDiff;
 
 public partial class MainWindow : Window
 {
-    private readonly IWorkbookReader _reader = new OpenXmlWorkbookReader();
+    private readonly IWorkbookReader _reader = new WorkbookReader();
     private readonly IComparisonEngine _engine = new ComparisonEngine();
     private readonly IExcelReportExporter _exporter = new ExcelReportExporter();
     private WorksheetData? _oldData;
@@ -39,7 +39,7 @@ public partial class MainWindow : Window
         if (demoIndex < 0) return;
         if (demoIndex + 2 >= arguments.Length)
         {
-            MessageBox.Show(this, "Demo mode requires paths to the older and newer .xlsx workbooks.", "Invalid demo command", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, "Demo mode requires paths to the older and newer Excel workbooks.", "Invalid demo command", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
 
@@ -133,7 +133,7 @@ public partial class MainWindow : Window
         var dialog = new OpenFileDialog
         {
             Title = "Choose an Excel workbook",
-            Filter = "Excel workbook (*.xlsx)|*.xlsx",
+            Filter = "Excel workbooks (*.xlsx;*.xls)|*.xlsx;*.xls|Modern workbook (*.xlsx)|*.xlsx|Legacy workbook (*.xls)|*.xls",
             CheckFileExists = true,
             Multiselect = false
         };
@@ -413,7 +413,7 @@ public partial class MainWindow : Window
         if (!valid)
         {
             oldHeader = newHeader = 1;
-            MessageBox.Show(this, "Choose both .xlsx files, select their sheets, and enter valid header row numbers.", "Complete step 1", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, "Choose both .xlsx or .xls files, select their sheets, and enter valid header row numbers.", "Complete step 1", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         return valid;
     }
