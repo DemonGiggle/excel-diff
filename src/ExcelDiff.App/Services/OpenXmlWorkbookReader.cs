@@ -74,6 +74,14 @@ public sealed partial class OpenXmlWorkbookReader : IWorkbookReader
                 progress?.Report(Math.Clamp(rowNumber * 100 / estimatedLastRow, 0, 99));
         }
 
+        var worksheet = worksheetPart.Worksheet ?? throw new InvalidDataException($"Sheet '{sheetName}' has no worksheet content.");
+        var mergedRanges = worksheet.Descendants<MergeCell>()
+            .Select(merge => ParseMergedRange(merge?.Reference?.Value))
+            .Where(range => range is not null)
+            .Cast<MergedCellRange>()
+            .ToArray();
+        MergedCellNormalizer.Expand(rows, mergedRanges, ref maxRow, ref maxColumn);
+
         if (maxRow == 0 || maxColumn == 0)
             issues.Add(new ComparisonIssue(IssueSeverity.Warning, "Empty sheet", "The selected sheet contains no saved cell values.", sheetName));
         progress?.Report(100);
@@ -168,6 +176,24 @@ public sealed partial class OpenXmlWorkbookReader : IWorkbookReader
             value = checked(value * 26 + char.ToUpperInvariant(c) - 'A' + 1);
         }
         return Math.Max(0, value - 1);
+    }
+
+    private static MergedCellRange? ParseMergedRange(string? reference)
+    {
+        if (string.IsNullOrWhiteSpace(reference)) return null;
+        var endpoints = reference.Split(':');
+        if (endpoints.Length is < 1 or > 2 || !TryParseCellReference(endpoints[0], out var fromRow, out var fromColumn)) return null;
+        if (endpoints.Length == 1) return new MergedCellRange(fromRow, fromColumn, fromRow, fromColumn);
+        return TryParseCellReference(endpoints[1], out var toRow, out var toColumn)
+            ? new MergedCellRange(fromRow, fromColumn, toRow, toColumn)
+            : null;
+    }
+
+    private static bool TryParseCellReference(string reference, out int row, out int column)
+    {
+        column = GetColumnIndex(reference);
+        var digits = new string(reference.Where(char.IsDigit).ToArray());
+        return int.TryParse(digits, out row) && row > 0;
     }
 
     private static string GetColumnName(int zeroBasedIndex)

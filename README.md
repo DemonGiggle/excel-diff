@@ -24,6 +24,12 @@ When the selected worksheets contain the same values, the unified view displays 
 
 Source workbooks are opened read-only. The app never runs formulas, macros, or external links. Formula cells are compared using their last saved results.
 
+Merged cells are normalized by repeating the top-left saved value across every cell in the merged range. For example, a merged `A1:B1` containing `FOO` is compared and displayed as `FOO` in both A1 and B1.
+
+Try this behavior with the [older merged-cell workbook](outputs/merged-cell-demo/merged-old.xlsx) and [newer merged-cell workbook](outputs/merged-cell-demo/merged-new.xlsx).
+
+![Excel Compare showing a merged two-column value repeated and compared in both covered cells](docs/images/excel-compare-merged.png)
+
 ## Build
 
 Requirements: Windows 10/11 x64 and the .NET 8 SDK.
@@ -49,5 +55,6 @@ To build without running tests:
 - Unified cell view with folded unchanged rows and changed-row navigation
 - Identical first rows automatically displayed as meaningful column headers
 - Clear confirmation when the selected worksheets are equal
+- Merged ranges compared as repeated copies of their top-left value
 - Text, number, date, Boolean, blank, error, and saved formula-result values
 - Formatting, charts, comments, macros, and workbook structure are intentionally ignored

@@ -1,7 +1,9 @@
 using ClosedXML.Excel;
+using ExcelDataReader;
 using ExcelDiff.Models;
 using ExcelDiff.Services;
 using System.IO;
+using System.Text;
 using Xunit;
 
 namespace ExcelDiff.Tests;
@@ -40,6 +42,31 @@ public sealed class WorkbookIntegrationTests : IDisposable
     }
 
     [Fact]
+    public void Reader_ExpandsMergedXlsxValuesAcrossTheFullRange()
+    {
+        var path = Path.Combine(_directory, "merged.xlsx");
+        using (var workbook = new XLWorkbook())
+        {
+            var sheet = workbook.Worksheets.Add("Merged");
+            sheet.Cell("A1").Value = "FOO";
+            sheet.Range("A1:B1").Merge();
+            sheet.Cell("C2").Value = "BAR";
+            sheet.Range("C2:C4").Merge();
+            workbook.SaveAs(path);
+        }
+
+        var grid = new WorkbookReader().ReadGrid(path, "Merged", CancellationToken.None);
+
+        Assert.Equal(4, grid.MaxRow);
+        Assert.Equal(3, grid.MaxColumn);
+        Assert.Equal("FOO", grid.CellAt(1, 0).DisplayValue);
+        Assert.Equal("FOO", grid.CellAt(1, 1).DisplayValue);
+        Assert.Equal("BAR", grid.CellAt(2, 2).DisplayValue);
+        Assert.Equal("BAR", grid.CellAt(3, 2).DisplayValue);
+        Assert.Equal("BAR", grid.CellAt(4, 2).DisplayValue);
+    }
+
+    [Fact]
     public void Reader_LoadsLegacyXlsWithoutExcelInstalled()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "TestData", "10x10.xls");
@@ -69,6 +96,30 @@ public sealed class WorkbookIntegrationTests : IDisposable
         Assert.Contains(CellValueKind.Number, kinds);
         Assert.Contains(CellValueKind.Date, kinds);
         Assert.Contains(CellValueKind.Boolean, kinds);
+    }
+
+    [Fact]
+    public void Reader_ExpandsMergedLegacyXlsValuesAcrossEveryCoveredCell()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", "MergedCell.xls");
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var rawReader = ExcelReaderFactory.CreateBinaryReader(stream);
+        var mergedRanges = rawReader.MergeCells;
+        Assert.NotEmpty(mergedRanges);
+
+        var grid = new WorkbookReader().ReadGrid(path, rawReader.Name, CancellationToken.None);
+        var nonEmptyRanges = mergedRanges
+            .Where(range => grid.CellAt(range.FromRow + 1, range.FromColumn).Kind != CellValueKind.Blank)
+            .ToArray();
+        Assert.NotEmpty(nonEmptyRanges);
+        foreach (var range in nonEmptyRanges)
+        {
+            var expected = grid.CellAt(range.FromRow + 1, range.FromColumn);
+            for (var row = range.FromRow; row <= range.ToRow; row++)
+            for (var column = range.FromColumn; column <= range.ToColumn; column++)
+                Assert.Equal(expected, grid.CellAt(row + 1, column));
+        }
     }
 
     public void Dispose()

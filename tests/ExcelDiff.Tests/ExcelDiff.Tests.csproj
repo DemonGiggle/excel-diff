@@ -18,6 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="TestData\10x10.xls" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="TestData\MergedCell.xls" CopyToOutputDirectory="PreserveNewest" />
     <None Include="TestData\NumDoubleDateBoolString.xls" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

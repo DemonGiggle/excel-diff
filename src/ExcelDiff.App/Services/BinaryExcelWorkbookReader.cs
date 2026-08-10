@@ -65,6 +65,12 @@ public sealed partial class BinaryExcelWorkbookReader : IWorkbookReader
                 if (estimatedRows > 0 && rowNumber % 250 == 0)
                     progress?.Report(Math.Clamp(rowNumber * 100 / estimatedRows, 0, 99));
             }
+            var mergedRanges = reader.MergeCells.Select(range => new MergedCellRange(
+                range.FromRow + 1,
+                range.FromColumn,
+                range.ToRow + 1,
+                range.ToColumn));
+            MergedCellNormalizer.Expand(rows, mergedRanges, ref maxRow, ref maxColumn);
             if (maxRow == 0 || maxColumn == 0)
                 issues.Add(new ComparisonIssue(IssueSeverity.Warning, "Empty sheet", "The selected sheet contains no saved cell values.", sheetName));
             progress?.Report(100);
