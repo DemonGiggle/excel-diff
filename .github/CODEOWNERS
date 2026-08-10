@@ -1,0 +1,12 @@
+# Default ownership for source and documentation.
+* @DemonGiggle
+
+# Signing and release-chain changes require explicit maintainer review.
+/.github/workflows/ @DemonGiggle
+/.signpath/ @DemonGiggle
+/build.ps1 @DemonGiggle
+/scripts/ @DemonGiggle
+/Directory.Build.props @DemonGiggle
+/src/ExcelDiff.App/ExcelDiff.App.csproj @DemonGiggle
+/src/ExcelDiff.App/packages.lock.json @DemonGiggle
+/tests/ExcelDiff.Tests/packages.lock.json @DemonGiggle

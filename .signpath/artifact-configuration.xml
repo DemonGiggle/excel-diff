@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<artifact-configuration
+  xmlns="http://signpath.io/artifact-configuration/v1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://signpath.io/artifact-configuration/v1 https://app.signpath.io/Web/artifact-configuration/v1.xsd">
+  <parameters>
+    <parameter name="version" required="true" />
+    <parameter name="fileVersion" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file
+      path="ExcelDiff.exe"
+      product-name="Excel Compare"
+      product-version="${version}"
+      file-version="${fileVersion}"
+      company-name="DemonGiggle"
+      copyright="Copyright (c) 2026 Gigo Liao and contributors"
+      original-filename="ExcelDiff.dll">
+      <authenticode-sign
+        description="Excel Compare"
+        description-url="https://github.com/DemonGiggle/excel-diff" />
+    </pe-file>
+    <pe-file
+      path="ExcelDiff.dll"
+      product-name="Excel Compare"
+      product-version="${version}"
+      file-version="${fileVersion}"
+      company-name="DemonGiggle"
+      copyright="Copyright (c) 2026 Gigo Liao and contributors"
+      original-filename="ExcelDiff.dll">
+      <authenticode-sign
+        description="Excel Compare"
+        description-url="https://github.com/DemonGiggle/excel-diff" />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

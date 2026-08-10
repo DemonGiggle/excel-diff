@@ -24,6 +24,9 @@ When the selected worksheets contain the same values, the unified view displays 
 
 Source workbooks are opened read-only. The app never runs formulas, macros, or external links. Formula cells are compared using their last saved results.
 
+The portable application does not require installation. To remove it, close the
+application and delete its extracted folder.
+
 Merged cells are normalized by repeating the top-left saved value across every cell in the merged range. For example, a merged `A1:B1` containing `FOO` is compared and displayed as `FOO` in both A1 and B1, including when that merged range supplies the automatic first-row headers.
 
 Try this behavior with the [older merged-cell workbook](outputs/merged-cell-demo/merged-old.xlsx) and [newer merged-cell workbook](outputs/merged-cell-demo/merged-new.xlsx).
@@ -46,6 +49,13 @@ To build without running tests:
 .\build.ps1 -SkipTests
 ```
 
+Release builds use an explicit three-part version so their file metadata can be
+verified before signing:
+
+```powershell
+.\build.ps1 -Version 0.3.0 -LockedMode
+```
+
 ## Supported scope
 
 - `.xlsx` and legacy `.xls` input files
@@ -58,3 +68,18 @@ To build without running tests:
 - Merged ranges compared as repeated copies of their top-left value
 - Text, number, date, Boolean, blank, error, and saved formula-result values
 - Formatting, charts, comments, macros, and workbook structure are intentionally ignored
+
+## Code signing policy
+
+Official signed releases are built from tagged source by GitHub Actions and
+submitted to SignPath for manual approval. Free code signing is provided by
+[SignPath.io](https://signpath.io/), certificate by
+[SignPath Foundation](https://signpath.org/).
+
+See the [code signing policy](CODE_SIGNING_POLICY.md), [privacy policy](PRIVACY.md),
+and [third-party notices](THIRD-PARTY-NOTICES.md). Signed release notes must link
+to the code signing policy.
+
+## License
+
+Excel Compare is available under the [MIT License](LICENSE).

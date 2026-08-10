@@ -2,10 +2,19 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <UseWPF>true</UseWPF>
     <AssemblyName>ExcelDiff</AssemblyName>
     <RootNamespace>ExcelDiff</RootNamespace>
     <Version>0.1.0</Version>
+    <Product>Excel Compare</Product>
+    <Company>DemonGiggle</Company>
+    <Authors>Gigo Liao and contributors</Authors>
+    <Copyright>Copyright (c) 2026 Gigo Liao and contributors</Copyright>
+    <Description>Offline visual comparison for Excel worksheets</Description>
+    <RepositoryUrl>https://github.com/DemonGiggle/excel-diff</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />

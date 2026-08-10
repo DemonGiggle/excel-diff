@@ -1,0 +1,116 @@
+name: Build and sign release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without the v prefix (for example, 0.3.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-sign:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v6
+
+      - name: Validate release tag and version
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if ($env:RELEASE_VERSION -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Version must contain three numeric components, for example 0.3.0."
+          }
+          if ($env:REF_TYPE -ne 'tag') {
+            throw "Run this workflow from the release tag, not from a branch."
+          }
+          if ($env:REF_NAME -ne "v$env:RELEASE_VERSION") {
+            throw "Tag '$env:REF_NAME' does not match version '$env:RELEASE_VERSION'."
+          }
+          "VERSION=$env:RELEASE_VERSION" >> $env:GITHUB_ENV
+          "FILE_VERSION=$env:RELEASE_VERSION.0" >> $env:GITHUB_ENV
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build and test unsigned release
+        shell: pwsh
+        run: .\build.ps1 -Configuration Release -Version $env:VERSION -LockedMode
+
+      - name: Upload unsigned application for SignPath
+        id: upload-unsigned-artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ExcelDiff-${{ env.VERSION }}-unsigned
+          path: artifacts/ExcelDiff-win-x64/*
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Submit SignPath signing request
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: portable-windows-v1
+          github-artifact-id: ${{ steps.upload-unsigned-artifact.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: ${{ github.workspace }}\signed
+          parameters: |
+            version: ${{ toJSON(env.VERSION) }}
+            fileVersion: ${{ toJSON(env.FILE_VERSION) }}
+
+      - name: Verify signed project binaries
+        shell: pwsh
+        run: |
+          $targets = @(
+            (Join-Path $PWD 'signed\ExcelDiff.exe'),
+            (Join-Path $PWD 'signed\ExcelDiff.dll')
+          )
+          foreach ($target in $targets) {
+            if (-not (Test-Path -LiteralPath $target -PathType Leaf)) {
+              throw "Signed output is missing: $target"
+            }
+            $signature = Get-AuthenticodeSignature -LiteralPath $target
+            if ($signature.Status -ne 'Valid') {
+              throw "Invalid signature for $target: $($signature.StatusMessage)"
+            }
+            Write-Host "$target signed by $($signature.SignerCertificate.Subject)"
+          }
+
+      - name: Package signed release and checksum
+        shell: pwsh
+        run: |
+          $zipName = "ExcelDiff-$env:VERSION-win-x64-portable.zip"
+          $zipPath = Join-Path $PWD "artifacts\$zipName"
+          if (Test-Path -LiteralPath $zipPath) {
+            Remove-Item -LiteralPath $zipPath -Force
+          }
+          [System.IO.Compression.ZipFile]::CreateFromDirectory(
+            (Join-Path $PWD 'signed'),
+            $zipPath,
+            [System.IO.Compression.CompressionLevel]::Optimal,
+            $false
+          )
+          $hash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $zipName" | Set-Content -LiteralPath "$zipPath.sha256" -Encoding ascii
+
+      - name: Upload signed release
+        uses: actions/upload-artifact@v7
+        with:
+          name: ExcelDiff-${{ env.VERSION }}-signed-release
+          path: |
+            artifacts/ExcelDiff-${{ env.VERSION }}-win-x64-portable.zip
+            artifacts/ExcelDiff-${{ env.VERSION }}-win-x64-portable.zip.sha256
+          if-no-files-found: error

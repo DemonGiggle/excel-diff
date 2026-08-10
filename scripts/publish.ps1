@@ -1,6 +1,9 @@
 param(
     [string]$Configuration = "Release",
-    [string]$DotNetPath = "dotnet"
+    [string]$DotNetPath = "dotnet",
+    [ValidatePattern('^\d+\.\d+\.\d+$')]
+    [string]$Version,
+    [switch]$LockedMode
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,9 +14,37 @@ $publishDirectory = Join-Path $artifactRoot "ExcelDiff-win-x64"
 $zipPath = Join-Path $artifactRoot "ExcelDiff-win-x64-portable.zip"
 
 New-Item -ItemType Directory -Path $artifactRoot -Force | Out-Null
-& $DotNetPath restore $projectPath -r win-x64 --configfile (Join-Path $repositoryRoot "NuGet.Config")
+$restoreArguments = @("restore", $projectPath, "-r", "win-x64", "--configfile", (Join-Path $repositoryRoot "NuGet.Config"))
+if ($LockedMode) {
+    $restoreArguments += "--locked-mode"
+}
+& $DotNetPath @restoreArguments
 if ($LASTEXITCODE -ne 0) { throw "Runtime package restore failed with exit code $LASTEXITCODE." }
-& $DotNetPath publish $projectPath -c $Configuration -r win-x64 --self-contained true --no-restore -p:PublishSingleFile=false -p:DebugType=None -p:DebugSymbols=false -o $publishDirectory
+
+if (Test-Path -LiteralPath $publishDirectory) {
+    Remove-Item -LiteralPath $publishDirectory -Recurse -Force
+}
+
+$publishArguments = @(
+    "publish", $projectPath,
+    "-c", $Configuration,
+    "-r", "win-x64",
+    "--self-contained", "true",
+    "--no-restore",
+    "-p:PublishSingleFile=false",
+    "-p:DebugType=None",
+    "-p:DebugSymbols=false",
+    "-o", $publishDirectory
+)
+if ($Version) {
+    $publishArguments += @(
+        "-p:Version=$Version",
+        "-p:AssemblyVersion=$Version.0",
+        "-p:FileVersion=$Version.0",
+        "-p:InformationalVersion=$Version"
+    )
+}
+& $DotNetPath @publishArguments
 if ($LASTEXITCODE -ne 0) { throw "Publishing failed with exit code $LASTEXITCODE." }
 
 if (Test-Path -LiteralPath $zipPath) {

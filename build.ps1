@@ -3,7 +3,12 @@ param(
     [ValidateSet("Release", "Debug")]
     [string]$Configuration = "Release",
 
-    [switch]$SkipTests
+    [switch]$SkipTests,
+
+    [ValidatePattern('^\d+\.\d+\.\d+$')]
+    [string]$Version,
+
+    [switch]$LockedMode
 )
 
 $ErrorActionPreference = "Stop"
@@ -48,7 +53,11 @@ Write-Host "Using .NET SDK: $dotnet" -ForegroundColor Cyan
 & $dotnet --version
 
 Write-Host "`nRestoring packages..." -ForegroundColor Cyan
-& $dotnet restore $solutionPath --configfile (Join-Path $repositoryRoot "NuGet.Config")
+$restoreArguments = @("restore", $solutionPath, "--configfile", (Join-Path $repositoryRoot "NuGet.Config"))
+if ($LockedMode) {
+    $restoreArguments += "--locked-mode"
+}
+& $dotnet @restoreArguments
 if ($LASTEXITCODE -ne 0) { throw "Package restore failed with exit code $LASTEXITCODE." }
 
 if (-not $SkipTests) {
@@ -58,7 +67,15 @@ if (-not $SkipTests) {
 }
 
 Write-Host "`nBuilding the portable Windows application..." -ForegroundColor Cyan
-& $publishScript -Configuration $Configuration -DotNetPath $dotnet
+$publishArguments = @{
+    Configuration = $Configuration
+    DotNetPath = $dotnet
+    LockedMode = $LockedMode
+}
+if ($Version) {
+    $publishArguments.Version = $Version
+}
+& $publishScript @publishArguments
 if ($LASTEXITCODE -ne 0) { throw "Publishing failed with exit code $LASTEXITCODE." }
 
 Write-Host "`nBuild completed successfully." -ForegroundColor Green
