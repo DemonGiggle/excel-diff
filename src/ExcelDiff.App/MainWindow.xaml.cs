@@ -160,10 +160,15 @@ public partial class MainWindow : Window
         SetBusy(true, "Reading workbook headers and rows…");
         try
         {
+            // Read every WPF control value before entering a worker thread. WPF controls
+            // are DispatcherObjects and cannot be accessed from Task.Run callbacks.
+            var oldPath = OldFileText.Text;
+            var newPath = NewFileText.Text;
+            var cancellationToken = _cancellation.Token;
             var oldProgress = new Progress<int>(value => BusyProgress.Value = value / 2.0);
-            _oldData = await Task.Run(() => _reader.ReadSheet(OldFileText.Text, oldSheet, oldHeader, _cancellation.Token, oldProgress));
+            _oldData = await Task.Run(() => _reader.ReadSheet(oldPath, oldSheet, oldHeader, cancellationToken, oldProgress));
             var newProgress = new Progress<int>(value => BusyProgress.Value = 50 + value / 2.0);
-            _newData = await Task.Run(() => _reader.ReadSheet(NewFileText.Text, newSheet, newHeader, _cancellation.Token, newProgress));
+            _newData = await Task.Run(() => _reader.ReadSheet(newPath, newSheet, newHeader, cancellationToken, newProgress));
             BuildMappings(_oldData, _newData);
             MappingTab.IsEnabled = true;
             WorkflowTabs.SelectedItem = MappingTab;
@@ -346,8 +351,11 @@ public partial class MainWindow : Window
         SetBusy(true, "Creating the Excel report…");
         try
         {
-            await Task.Run(() => _exporter.Export(_result, dialog.FileName, _cancellation.Token));
-            StatusText.Text = $"Report saved: {dialog.FileName}";
+            var outputPath = dialog.FileName;
+            var result = _result;
+            var cancellationToken = _cancellation.Token;
+            await Task.Run(() => _exporter.Export(result, outputPath, cancellationToken));
+            StatusText.Text = $"Report saved: {outputPath}";
             MessageBox.Show(this, $"The report was saved successfully.{Environment.NewLine}{dialog.FileName}", "Report ready", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (OperationCanceledException)
