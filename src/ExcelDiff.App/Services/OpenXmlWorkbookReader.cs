@@ -24,113 +24,60 @@ public sealed partial class OpenXmlWorkbookReader : IWorkbookReader
             .ToArray() ?? [];
     }
 
-    public WorksheetData ReadSheet(
+    public WorksheetGrid ReadGrid(
         string filePath,
         string sheetName,
-        int headerRow,
         CancellationToken cancellationToken,
         IProgress<int>? progress = null)
     {
         ValidatePath(filePath);
-        if (headerRow < 1) throw new ArgumentOutOfRangeException(nameof(headerRow), "Header row must be 1 or greater.");
-
         using var stream = OpenReadOnly(filePath);
         using var document = SpreadsheetDocument.Open(stream, false);
         var workbookPart = document.WorkbookPart ?? throw new InvalidDataException("The workbook structure is missing.");
         var sheets = workbookPart.Workbook?.Sheets ?? throw new InvalidDataException("The workbook has no worksheet list.");
-        var sheet = sheets.Elements<Sheet>()
-            .FirstOrDefault(s => string.Equals(s.Name?.Value, sheetName, StringComparison.Ordinal));
+        var sheet = sheets.Elements<Sheet>().FirstOrDefault(item => string.Equals(item.Name?.Value, sheetName, StringComparison.Ordinal));
         if (sheet?.Id?.Value is null) throw new InvalidDataException($"Sheet '{sheetName}' was not found.");
 
         var worksheetPart = (WorksheetPart)workbookPart.GetPartById(sheet.Id.Value);
         var sharedStrings = workbookPart.SharedStringTablePart?.SharedStringTable;
         var styles = workbookPart.WorkbookStylesPart?.Stylesheet;
         var issues = new List<ComparisonIssue>();
-        var dataRows = new List<SheetRow>();
-        List<SheetHeader>? headers = null;
+        var rows = new Dictionary<int, GridRow>();
+        var maxRow = 0;
+        var maxColumn = 0;
         var estimatedLastRow = ReadEstimatedLastRow(worksheetPart);
 
         using var reader = OpenXmlReader.Create(worksheetPart);
         while (reader.Read())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!reader.IsStartElement || reader.ElementType != typeof(Row)) continue;
-            if (reader.LoadCurrentElement() is not Row row) continue;
+            if (!reader.IsStartElement || reader.ElementType != typeof(Row) || reader.LoadCurrentElement() is not Row row) continue;
             var rowNumber = checked((int)(row.RowIndex?.Value ?? 0));
-            if (rowNumber < headerRow) continue;
-
-            var indexedCells = row.Elements<Cell>().ToDictionary(c => GetColumnIndex(c.CellReference?.Value));
-            if (rowNumber == headerRow)
+            if (rowNumber < 1) continue;
+            var cells = new Dictionary<int, CellData>();
+            foreach (var cell in row.Elements<Cell>())
             {
-                if (indexedCells.Count == 0)
-                    throw new InvalidDataException($"Row {headerRow} in '{sheetName}' is empty. Choose the row containing column names.");
-
-                var lastColumn = indexedCells.Keys.Max();
-                headers = BuildHeaders(indexedCells, lastColumn, sharedStrings, styles, issues, sheetName);
-                continue;
-            }
-
-            if (headers is null) continue;
-            var values = new CellData[headers.Count];
-            var hasAnyValue = false;
-            for (var column = 0; column < headers.Count; column++)
-            {
-                var value = indexedCells.TryGetValue(column, out var cell)
-                    ? ReadCell(cell, sharedStrings, styles)
-                    : CellData.Blank;
-                values[column] = value;
-                hasAnyValue |= value.Kind != CellValueKind.Blank;
+                var column = GetColumnIndex(cell.CellReference?.Value);
+                var value = ReadCell(cell, sharedStrings, styles);
                 if (value.MissingCachedFormulaValue)
-                {
-                    issues.Add(new ComparisonIssue(IssueSeverity.Warning, "Formula",
-                        "A formula has no saved result. It is treated as blank because formulas are never executed.",
-                        $"{sheetName}!{GetColumnName(column)}{rowNumber}"));
-                }
+                    issues.Add(new ComparisonIssue(IssueSeverity.Warning, "Formula", "A formula has no saved result and is treated as blank.", $"{sheetName}!{GetColumnName(column)}{rowNumber}"));
+                if (value.Kind == CellValueKind.Blank) continue;
+                cells[column] = value;
+                maxColumn = Math.Max(maxColumn, column + 1);
             }
-
-            if (hasAnyValue) dataRows.Add(new SheetRow(rowNumber, values));
+            if (cells.Count > 0)
+            {
+                rows[rowNumber] = new GridRow(rowNumber, cells);
+                maxRow = Math.Max(maxRow, rowNumber);
+            }
             if (estimatedLastRow > 0 && rowNumber % 250 == 0)
                 progress?.Report(Math.Clamp(rowNumber * 100 / estimatedLastRow, 0, 99));
         }
 
-        if (headers is null)
-            throw new InvalidDataException($"Header row {headerRow} was not found in '{sheetName}'.");
-
-        if (dataRows.Count == 0)
-            issues.Add(new ComparisonIssue(IssueSeverity.Warning, "Empty sheet", "No data rows were found below the selected header row.", sheetName));
+        if (maxRow == 0 || maxColumn == 0)
+            issues.Add(new ComparisonIssue(IssueSeverity.Warning, "Empty sheet", "The selected sheet contains no saved cell values.", sheetName));
         progress?.Report(100);
-        return new WorksheetData(filePath, sheetName, headerRow, headers, dataRows, issues);
-    }
-
-    private static List<SheetHeader> BuildHeaders(
-        IReadOnlyDictionary<int, Cell> cells,
-        int lastColumn,
-        SharedStringTable? sharedStrings,
-        Stylesheet? styles,
-        ICollection<ComparisonIssue> issues,
-        string sheetName)
-    {
-        var result = new List<SheetHeader>(lastColumn + 1);
-        var seen = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        for (var index = 0; index <= lastColumn; index++)
-        {
-            var text = cells.TryGetValue(index, out var cell) ? ReadCell(cell, sharedStrings, styles).DisplayValue.Trim() : string.Empty;
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                text = $"Unnamed column {GetColumnName(index)}";
-                issues.Add(new ComparisonIssue(IssueSeverity.Warning, "Header", "A blank header was assigned a temporary name.", $"{sheetName}!{GetColumnName(index)}"));
-            }
-
-            var normalized = text.Trim();
-            if (seen.TryGetValue(normalized, out _))
-            {
-                issues.Add(new ComparisonIssue(IssueSeverity.Warning, "Header", $"Duplicate header '{text}' was disambiguated.", $"{sheetName}!{GetColumnName(index)}"));
-                text = $"{text} [{GetColumnName(index)}]";
-            }
-            else seen[normalized] = index;
-            result.Add(new SheetHeader(index, text));
-        }
-        return result;
+        return new WorksheetGrid(filePath, sheetName, maxRow, maxColumn, rows, issues);
     }
 
     private static CellData ReadCell(Cell cell, SharedStringTable? sharedStrings, Stylesheet? styles)

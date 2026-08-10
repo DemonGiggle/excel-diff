@@ -1,0 +1,57 @@
+<UserControl x:Class="ExcelDiff.Controls.DiffCellControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:ExcelDiff.Models"
+             x:Name="Root" MinHeight="27">
+    <Border x:Name="CellBorder" Padding="6,4" Background="Transparent" ToolTip="{Binding Cell.AccessibleText, ElementName=Root}">
+        <Grid>
+            <TextBlock Text="{Binding Cell.NewValue, ElementName=Root}" TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers><DataTrigger Binding="{Binding Cell.Kind, ElementName=Root}" Value="{x:Static models:UnifiedCellKind.Unchanged}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <TextBlock Text="{Binding Cell.NewValue, ElementName=Root}" Foreground="#126B35" TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers><DataTrigger Binding="{Binding Cell.Kind, ElementName=Root}" Value="{x:Static models:UnifiedCellKind.Added}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <TextBlock Text="{Binding Cell.OldValue, ElementName=Root}" Foreground="#9F2020" TextDecorations="Strikethrough" TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers><DataTrigger Binding="{Binding Cell.Kind, ElementName=Root}" Value="{x:Static models:UnifiedCellKind.Removed}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <WrapPanel>
+                <WrapPanel.Style>
+                    <Style TargetType="WrapPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers><DataTrigger Binding="{Binding Cell.Kind, ElementName=Root}" Value="{x:Static models:UnifiedCellKind.Changed}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                    </Style>
+                </WrapPanel.Style>
+                <TextBlock Text="{Binding Cell.OldValue, ElementName=Root}" Foreground="#9F2020" Background="#FDE8E8" TextDecorations="Strikethrough" Padding="2"/>
+                <TextBlock Text=" → " Foreground="#607089" Margin="2,0"/>
+                <TextBlock Text="{Binding Cell.NewValue, ElementName=Root}" Foreground="#126B35" Background="#E1F5E8" Padding="2"/>
+            </WrapPanel>
+        </Grid>
+        <Border.Style>
+            <Style TargetType="Border">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Cell.Kind, ElementName=Root}" Value="{x:Static models:UnifiedCellKind.Added}">
+                        <Setter Property="Background" Value="#E1F5E8"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Cell.Kind, ElementName=Root}" Value="{x:Static models:UnifiedCellKind.Removed}">
+                        <Setter Property="Background" Value="#FDE8E8"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+    </Border>
+</UserControl>

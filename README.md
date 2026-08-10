@@ -1,20 +1,20 @@
 # Excel Compare
 
-Excel Compare is an offline Windows desktop tool for comparing one table from two `.xlsx` or legacy `.xls` workbooks. It matches rows by business keys instead of row position, presents an accessible interactive review, and exports a shareable `.xlsx` report.
+Excel Compare is an offline Windows desktop tool that presents two `.xlsx` or legacy `.xls` worksheets as one clear visual diff. It detects inserted and removed rows or columns so one structural change does not create a cascade of false differences.
 
-![Excel Compare showing an employee roster comparison with changed, added, removed, and unchanged rows](docs/images/excel-compare-demo.png)
+![Excel Compare unified worksheet view with removed values struck through in red and added values highlighted in green](docs/images/excel-compare-demo.png)
 
 ## Try the demo
 
-Download the [older employee roster](outputs/readme-demo/employee-roster-old.xlsx) and [newer employee roster](outputs/readme-demo/employee-roster-new.xlsx), then select `Employee ID` as the row key. The comparison contains five changed rows, two additions, one removal, and four unchanged rows.
+Download the [older employee roster](outputs/readme-demo/employee-roster-old.xlsx) and [newer employee roster](outputs/readme-demo/employee-roster-new.xlsx), select the worksheet in each file, and compare them.
 
 ## Use
 
 1. Run `ExcelDiff.exe`.
 2. Choose the older and newer `.xlsx` or `.xls` files.
-3. Select a worksheet and header row from each file.
-4. Review the automatic field mapping and mark one or more unique **Row key** fields.
-5. Compare, filter the result, inspect individual rows, and export the report.
+3. Select one worksheet from each file and choose **Compare worksheets**.
+4. Review the unified worksheet: red struck-through values were removed, green values were added, and changed cells show both old and new values.
+5. Use **Previous change** and **Next change** to move between changed rows. Consecutive unchanged rows are folded automatically.
 
 Source workbooks are opened read-only. The app never runs formulas, macros, or external links. Formula cells are compared using their last saved results.
 
@@ -37,7 +37,9 @@ To build without running tests:
 ## Supported scope
 
 - `.xlsx` and legacy `.xls` input files
-- One selected sheet/table pair per comparison
-- Single or composite row keys
+- One selected worksheet pair per comparison
+- Automatic used range from `A1` through the furthest populated cell
+- Automatic inserted/removed row and column alignment
+- Unified cell view with folded unchanged rows and changed-row navigation
 - Text, number, date, Boolean, blank, error, and saved formula-result values
 - Formatting, charts, comments, macros, and workbook structure are intentionally ignored

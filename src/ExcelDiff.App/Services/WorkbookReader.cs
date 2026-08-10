@@ -10,13 +10,12 @@ public sealed class WorkbookReader : IWorkbookReader
 
     public IReadOnlyList<string> GetSheetNames(string filePath) => ReaderFor(filePath).GetSheetNames(filePath);
 
-    public WorksheetData ReadSheet(
+    public WorksheetGrid ReadGrid(
         string filePath,
         string sheetName,
-        int headerRow,
         CancellationToken cancellationToken,
         IProgress<int>? progress = null) =>
-        ReaderFor(filePath).ReadSheet(filePath, sheetName, headerRow, cancellationToken, progress);
+        ReaderFor(filePath).ReadGrid(filePath, sheetName, cancellationToken, progress);
 
     private IWorkbookReader ReaderFor(string filePath)
     {
