@@ -85,7 +85,10 @@ public sealed partial class OpenXmlWorkbookReader : IWorkbookReader
         if (maxRow == 0 || maxColumn == 0)
             issues.Add(new ComparisonIssue(IssueSeverity.Warning, "Empty sheet", "The selected sheet contains no saved cell values.", sheetName));
         progress?.Report(100);
-        return new WorksheetGrid(filePath, sheetName, maxRow, maxColumn, rows, issues);
+        return new WorksheetGrid(filePath, sheetName, maxRow, maxColumn, rows, issues)
+        {
+            MergedRanges = mergedRanges
+        };
     }
 
     private static CellData ReadCell(Cell cell, SharedStringTable? sharedStrings, Stylesheet? styles)

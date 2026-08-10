@@ -5,6 +5,8 @@ public sealed record GridRow(int RowNumber, IReadOnlyDictionary<int, CellData> C
     public CellData CellAt(int zeroBasedColumn) => Cells.GetValueOrDefault(zeroBasedColumn, CellData.Blank);
 }
 
+public sealed record MergedCellRange(int FromRow, int FromColumn, int ToRow, int ToColumn);
+
 public sealed record WorksheetGrid(
     string FilePath,
     string SheetName,
@@ -13,6 +15,8 @@ public sealed record WorksheetGrid(
     IReadOnlyDictionary<int, GridRow> Rows,
     IReadOnlyList<ComparisonIssue> ReadIssues)
 {
+    public IReadOnlyList<MergedCellRange> MergedRanges { get; init; } = [];
+
     public CellData CellAt(int oneBasedRow, int zeroBasedColumn) =>
         Rows.TryGetValue(oneBasedRow, out var row) ? row.CellAt(zeroBasedColumn) : CellData.Blank;
 }

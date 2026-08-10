@@ -64,6 +64,8 @@ public sealed class WorkbookIntegrationTests : IDisposable
         Assert.Equal("BAR", grid.CellAt(2, 2).DisplayValue);
         Assert.Equal("BAR", grid.CellAt(3, 2).DisplayValue);
         Assert.Equal("BAR", grid.CellAt(4, 2).DisplayValue);
+        Assert.Contains(new MergedCellRange(1, 0, 1, 1), grid.MergedRanges);
+        Assert.Contains(new MergedCellRange(2, 2, 4, 2), grid.MergedRanges);
     }
 
     [Fact]
@@ -109,6 +111,7 @@ public sealed class WorkbookIntegrationTests : IDisposable
         Assert.NotEmpty(mergedRanges);
 
         var grid = new WorkbookReader().ReadGrid(path, rawReader.Name, CancellationToken.None);
+        Assert.NotEmpty(grid.MergedRanges);
         var nonEmptyRanges = mergedRanges
             .Where(range => grid.CellAt(range.FromRow + 1, range.FromColumn).Kind != CellValueKind.Blank)
             .ToArray();

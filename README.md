@@ -24,7 +24,7 @@ When the selected worksheets contain the same values, the unified view displays 
 
 Source workbooks are opened read-only. The app never runs formulas, macros, or external links. Formula cells are compared using their last saved results.
 
-Merged cells are normalized by repeating the top-left saved value across every cell in the merged range. For example, a merged `A1:B1` containing `FOO` is compared and displayed as `FOO` in both A1 and B1.
+Merged cells are normalized by repeating the top-left saved value across every cell in the merged range. For example, a merged `A1:B1` containing `FOO` is compared and displayed as `FOO` in both A1 and B1. When identical merged cells appear in the automatic first-row headers, only the top-left header uses the merged value; covered columns keep their Excel labels, such as `B`.
 
 Try this behavior with the [older merged-cell workbook](outputs/merged-cell-demo/merged-old.xlsx) and [newer merged-cell workbook](outputs/merged-cell-demo/merged-new.xlsx).
 
