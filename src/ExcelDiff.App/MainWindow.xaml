@@ -64,6 +64,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
@@ -89,7 +90,18 @@
                         </DockPanel>
                     </Border>
 
-                    <DataGrid x:Name="DiffGrid" Grid.Row="2" IsReadOnly="True" SelectionMode="Single"
+                    <Border x:Name="EqualBanner" Grid.Row="2" Background="#DDF5E6" BorderBrush="#72B88A" BorderThickness="1"
+                            CornerRadius="6" Padding="16,12" Margin="0,0,0,10" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="✓" FontSize="22" FontWeight="Bold" Foreground="#126B35" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <StackPanel>
+                                <TextBlock Text="The selected worksheets are equal" FontSize="17" FontWeight="SemiBold" Foreground="#125D31"/>
+                                <TextBlock Text="No cell values were added, removed, or changed." Foreground="#31704A" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <DataGrid x:Name="DiffGrid" Grid.Row="3" IsReadOnly="True" SelectionMode="Single"
                               SelectionUnit="FullRow" FrozenColumnCount="1" EnableColumnVirtualization="True"
                               EnableRowVirtualization="True" HeadersVisibility="Column" CanUserReorderColumns="False">
                         <DataGrid.RowStyle>

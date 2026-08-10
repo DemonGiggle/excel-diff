@@ -142,6 +142,7 @@ public partial class MainWindow : Window
     {
         BuildGridColumns(result.Columns);
         DiffGrid.ItemsSource = result.Rows;
+        EqualBanner.Visibility = result.DifferenceRowCount == 0 ? Visibility.Visible : Visibility.Collapsed;
         _differenceRows = result.Rows.Where(row => row.IsDifference).ToArray();
         _differenceIndex = -1;
         ResultsTab.IsEnabled = true;
@@ -216,6 +217,7 @@ public partial class MainWindow : Window
         NewSheetCombo.ItemsSource = null;
         DiffGrid.ItemsSource = null;
         DiffGrid.Columns.Clear();
+        EqualBanner.Visibility = Visibility.Collapsed;
         ResultsTab.IsEnabled = false;
         WorkflowTabs.SelectedItem = FilesTab;
         StatusText.Text = "Ready for a new comparison";

@@ -107,6 +107,19 @@ public sealed class WorksheetDiffEngineTests
     }
 
     [Fact]
+    public void IdenticalWorksheets_HaveNoDifferenceRows()
+    {
+        var oldSheet = Grid(["Employee ID", "Name"], ["1", "Alice"], ["2", "Bob"]);
+        var newSheet = Grid(["Employee ID", "Name"], ["1", "Alice"], ["2", "Bob"]);
+
+        var result = Compare(oldSheet, newSheet);
+
+        Assert.Equal(0, result.DifferenceRowCount);
+        Assert.DoesNotContain(result.Rows, row => row.IsDifference);
+        Assert.True(result.FirstRowUsedAsHeaders);
+    }
+
+    [Fact]
     public void EmptyInteriorCells_RemainPartOfUsedRectangle()
     {
         var oldSheet = Grid(["A", null, "C"], [null, null, "last"]);

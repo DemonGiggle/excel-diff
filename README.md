@@ -18,6 +18,10 @@ Download the [older employee roster](outputs/readme-demo/employee-roster-old.xls
 
 When the first row is identical in both worksheets, its values become the unified view's column headers and the row is not repeated in the grid. If the first row differs, the grid keeps the Excel column letters and compares row 1 normally.
 
+When the selected worksheets contain the same values, the unified view displays a prominent confirmation instead of leaving users to infer the result from an empty change count.
+
+![Excel Compare confirming that two selected worksheets are equal](docs/images/excel-compare-equal.png)
+
 Source workbooks are opened read-only. The app never runs formulas, macros, or external links. Formula cells are compared using their last saved results.
 
 ## Build
@@ -44,5 +48,6 @@ To build without running tests:
 - Automatic inserted/removed row and column alignment
 - Unified cell view with folded unchanged rows and changed-row navigation
 - Identical first rows automatically displayed as meaningful column headers
+- Clear confirmation when the selected worksheets are equal
 - Text, number, date, Boolean, blank, error, and saved formula-result values
 - Formatting, charts, comments, macros, and workbook structure are intentionally ignored
