@@ -54,6 +54,7 @@ public sealed class UnifiedDiffRow
 public sealed record WorksheetDiffResult(
     IReadOnlyList<UnifiedColumn> Columns,
     IReadOnlyList<UnifiedDiffRow> Rows,
+    bool FirstRowUsedAsHeaders,
     int DifferenceRowCount,
     int AddedRowCount,
     int RemovedRowCount,

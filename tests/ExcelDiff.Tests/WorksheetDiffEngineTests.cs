@@ -67,8 +67,8 @@ public sealed class WorksheetDiffEngineTests
     [Fact]
     public void ConsecutiveUnchangedRows_AreFoldedAroundChangedRow()
     {
-        var oldSheet = Grid(["1"], ["2"], ["old"], ["4"], ["5"]);
-        var newSheet = Grid(["1"], ["2"], ["new"], ["4"], ["5"]);
+        var oldSheet = Grid(["Header"], ["1"], ["2"], ["old"], ["4"], ["5"]);
+        var newSheet = Grid(["Header"], ["1"], ["2"], ["new"], ["4"], ["5"]);
 
         var result = Compare(oldSheet, newSheet);
 
@@ -76,6 +76,34 @@ public sealed class WorksheetDiffEngineTests
             row => { Assert.Equal(UnifiedRowKind.Fold, row.Kind); Assert.Equal(2, row.FoldedRowCount); },
             row => Assert.Equal(UnifiedRowKind.Changed, row.Kind),
             row => { Assert.Equal(UnifiedRowKind.Fold, row.Kind); Assert.Equal(2, row.FoldedRowCount); });
+    }
+
+    [Fact]
+    public void IdenticalFirstRow_BecomesHeadersAndIsRemovedFromBody()
+    {
+        var oldSheet = Grid(["Employee ID", "Name"], ["1", "Alice"]);
+        var newSheet = Grid(["Employee ID", "Name"], ["1", "Alicia"]);
+
+        var result = Compare(oldSheet, newSheet);
+
+        Assert.True(result.FirstRowUsedAsHeaders);
+        Assert.Equal(["Employee ID", "Name"], result.Columns.Select(column => column.Label));
+        var row = Assert.Single(result.Rows);
+        Assert.Equal(2, row.OldRowNumber);
+        Assert.Equal(2, row.NewRowNumber);
+    }
+
+    [Fact]
+    public void ChangedFirstRow_RemainsInBodyAndKeepsColumnLetters()
+    {
+        var oldSheet = Grid(["Employee ID", "Old name"], ["1", "Alice"]);
+        var newSheet = Grid(["Employee ID", "New name"], ["1", "Alice"]);
+
+        var result = Compare(oldSheet, newSheet);
+
+        Assert.False(result.FirstRowUsedAsHeaders);
+        Assert.Equal(["A", "B"], result.Columns.Select(column => column.Label));
+        Assert.Contains(result.Rows, row => row.OldRowNumber == 1 && row.NewRowNumber == 1 && row.Kind == UnifiedRowKind.Changed);
     }
 
     [Fact]

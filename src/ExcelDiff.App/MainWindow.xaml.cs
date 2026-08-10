@@ -151,6 +151,7 @@ public partial class MainWindow : Window
         StatusText.Text = result.DifferenceRowCount == 0
             ? "No differences found"
             : $"{result.DifferenceRowCount:N0} changed row{(result.DifferenceRowCount == 1 ? "" : "s")} • {result.ChangedCellCount:N0} changed cell{(result.ChangedCellCount == 1 ? "" : "s")}";
+        if (result.FirstRowUsedAsHeaders) StatusText.Text += " • Identical first row used as headers";
         UpdateNavigation();
         if (_differenceRows.Count > 0) Navigate(1);
     }

@@ -16,6 +16,8 @@ Download the [older employee roster](outputs/readme-demo/employee-roster-old.xls
 4. Review the unified worksheet: red struck-through values were removed, green values were added, and changed cells show both old and new values.
 5. Use **Previous change** and **Next change** to move between changed rows. Consecutive unchanged rows are folded automatically.
 
+When the first row is identical in both worksheets, its values become the unified view's column headers and the row is not repeated in the grid. If the first row differs, the grid keeps the Excel column letters and compares row 1 normally.
+
 Source workbooks are opened read-only. The app never runs formulas, macros, or external links. Formula cells are compared using their last saved results.
 
 ## Build
@@ -41,5 +43,6 @@ To build without running tests:
 - Automatic used range from `A1` through the furthest populated cell
 - Automatic inserted/removed row and column alignment
 - Unified cell view with folded unchanged rows and changed-row navigation
+- Identical first rows automatically displayed as meaningful column headers
 - Text, number, date, Boolean, blank, error, and saved formula-result values
 - Formatting, charts, comments, macros, and workbook structure are intentionally ignored

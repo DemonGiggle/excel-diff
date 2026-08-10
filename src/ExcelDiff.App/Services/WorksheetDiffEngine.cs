@@ -37,10 +37,6 @@ public sealed class WorksheetDiffEngine : IWorksheetDiffEngine
             Enumerable.Range(0, oldSheet.MaxColumn).Select(column => ColumnSignature(oldSheet, column, rows, true)).ToArray(),
             Enumerable.Range(0, newSheet.MaxColumn).Select(column => ColumnSignature(newSheet, column, rows, false)).ToArray());
 
-        var unifiedColumns = columns.Select(pair => new UnifiedColumn(
-            pair.OldIndex,
-            pair.NewIndex,
-            ColumnLabel(pair.OldIndex, pair.NewIndex))).ToArray();
         var rawRows = new List<UnifiedDiffRow>(rows.Count);
         var changedCells = 0;
 
@@ -82,11 +78,25 @@ public sealed class WorksheetDiffEngine : IWorksheetDiffEngine
                 progress?.Report(45 + (rows.Count == 0 ? 45 : index * 45 / rows.Count));
         }
 
+        var firstRowUsedAsHeaders = rawRows.Count > 0
+            && rawRows[0].OldRowNumber == 1
+            && rawRows[0].NewRowNumber == 1
+            && rawRows[0].Kind == UnifiedRowKind.Unchanged
+            && columns.All(pair => pair.OldIndex is not null && pair.NewIndex is not null);
+        var unifiedColumns = columns.Select((pair, index) => new UnifiedColumn(
+            pair.OldIndex,
+            pair.NewIndex,
+            firstRowUsedAsHeaders
+                ? HeaderLabel(rawRows[0].Cells[index].NewValue, pair.OldIndex, pair.NewIndex)
+                : ColumnLabel(pair.OldIndex, pair.NewIndex))).ToArray();
+        if (firstRowUsedAsHeaders) rawRows.RemoveAt(0);
+
         var foldedRows = FoldUnchangedRows(rawRows, unifiedColumns.Length);
         progress?.Report(100);
         return new WorksheetDiffResult(
             unifiedColumns,
             foldedRows,
+            firstRowUsedAsHeaders,
             rawRows.Count(row => row.IsDifference),
             rawRows.Count(row => row.Kind == UnifiedRowKind.Added),
             rawRows.Count(row => row.Kind == UnifiedRowKind.Removed),
@@ -252,6 +262,9 @@ public sealed class WorksheetDiffEngine : IWorksheetDiffEngine
         var prefix = oldIndex is null ? "+ " : newIndex is null ? "− " : string.Empty;
         return prefix + ExcelColumnName(index);
     }
+
+    private static string HeaderLabel(string value, int? oldIndex, int? newIndex) =>
+        string.IsNullOrWhiteSpace(value) ? ColumnLabel(oldIndex, newIndex) : value;
 
     private static string ExcelColumnName(int zeroBasedIndex)
     {
