@@ -54,8 +54,7 @@
                             </Grid>
                         </Border>
 
-                        <Button Content="Compare worksheets" Style="{StaticResource PrimaryButton}"
-                                HorizontalAlignment="Right" Click="Compare_Click"/>
+                        <Button Content="Compare worksheets" HorizontalAlignment="Right" Click="Compare_Click"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -75,7 +74,7 @@
                         </StackPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button x:Name="PreviousDifferenceButton" Content="← Previous change" Click="PreviousDifference_Click"/>
-                            <Button x:Name="NextDifferenceButton" Content="Next change →" Style="{StaticResource PrimaryButton}" Click="NextDifference_Click"/>
+                            <Button x:Name="NextDifferenceButton" Content="Next change →" Click="NextDifference_Click"/>
                         </StackPanel>
                     </DockPanel>
 
