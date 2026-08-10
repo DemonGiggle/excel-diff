@@ -87,12 +87,7 @@ public sealed class WorksheetDiffEngine : IWorksheetDiffEngine
             pair.OldIndex,
             pair.NewIndex,
             firstRowUsedAsHeaders
-                ? HeaderLabel(
-                    rawRows[0].Cells[index].NewValue,
-                    pair.OldIndex,
-                    pair.NewIndex,
-                    IsMergedHeaderContinuation(oldSheet, pair.OldIndex)
-                    && IsMergedHeaderContinuation(newSheet, pair.NewIndex))
+                ? HeaderLabel(rawRows[0].Cells[index].NewValue, pair.OldIndex, pair.NewIndex)
                 : ColumnLabel(pair.OldIndex, pair.NewIndex))).ToArray();
         if (firstRowUsedAsHeaders) rawRows.RemoveAt(0);
 
@@ -268,15 +263,8 @@ public sealed class WorksheetDiffEngine : IWorksheetDiffEngine
         return prefix + ExcelColumnName(index);
     }
 
-    private static string HeaderLabel(string value, int? oldIndex, int? newIndex, bool isMergedContinuation) =>
-        isMergedContinuation || string.IsNullOrWhiteSpace(value) ? ColumnLabel(oldIndex, newIndex) : value;
-
-    private static bool IsMergedHeaderContinuation(WorksheetGrid sheet, int? column) =>
-        column is int columnIndex && sheet.MergedRanges.Any(range =>
-            range.FromRow == 1
-            && range.ToRow >= 1
-            && columnIndex > range.FromColumn
-            && columnIndex <= range.ToColumn);
+    private static string HeaderLabel(string value, int? oldIndex, int? newIndex) =>
+        string.IsNullOrWhiteSpace(value) ? ColumnLabel(oldIndex, newIndex) : value;
 
     private static string ExcelColumnName(int zeroBasedIndex)
     {

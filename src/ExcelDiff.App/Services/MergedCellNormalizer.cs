@@ -2,6 +2,8 @@ using ExcelDiff.Models;
 
 namespace ExcelDiff.Services;
 
+internal sealed record MergedCellRange(int FromRow, int FromColumn, int ToRow, int ToColumn);
+
 internal static class MergedCellNormalizer
 {
     public static void Expand(

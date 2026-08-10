@@ -69,15 +69,12 @@ public sealed partial class BinaryExcelWorkbookReader : IWorkbookReader
                 range.FromRow + 1,
                 range.FromColumn,
                 range.ToRow + 1,
-                range.ToColumn)).ToArray();
+                range.ToColumn));
             MergedCellNormalizer.Expand(rows, mergedRanges, ref maxRow, ref maxColumn);
             if (maxRow == 0 || maxColumn == 0)
                 issues.Add(new ComparisonIssue(IssueSeverity.Warning, "Empty sheet", "The selected sheet contains no saved cell values.", sheetName));
             progress?.Report(100);
-            return new WorksheetGrid(filePath, sheetName, maxRow, maxColumn, rows, issues)
-            {
-                MergedRanges = mergedRanges
-            };
+            return new WorksheetGrid(filePath, sheetName, maxRow, maxColumn, rows, issues);
         } while (reader.NextResult());
 
         throw new InvalidDataException($"Sheet '{sheetName}' was not found.");

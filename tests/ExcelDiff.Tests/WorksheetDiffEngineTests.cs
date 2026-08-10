@@ -94,16 +94,15 @@ public sealed class WorksheetDiffEngineTests
     }
 
     [Fact]
-    public void IdenticalMergedFirstRow_UsesMergedValueOnlyForTopLeftHeader()
+    public void IdenticalRepeatedMergedValues_AppearInEveryCoveredHeaderColumn()
     {
-        var mergedHeader = new[] { new MergedCellRange(1, 0, 1, 1) };
-        var oldSheet = GridWithMerges(mergedHeader, ["Region", "Region", "Amount"], ["North", "North", "100"]);
-        var newSheet = GridWithMerges(mergedHeader, ["Region", "Region", "Amount"], ["South", "South", "100"]);
+        var oldSheet = Grid(["Region", "Region", "Amount"], ["North", "North", "100"]);
+        var newSheet = Grid(["Region", "Region", "Amount"], ["South", "South", "100"]);
 
         var result = Compare(oldSheet, newSheet);
 
         Assert.True(result.FirstRowUsedAsHeaders);
-        Assert.Equal(["Region", "B", "Amount"], result.Columns.Select(column => column.Label));
+        Assert.Equal(["Region", "Region", "Amount"], result.Columns.Select(column => column.Label));
         var changed = Assert.Single(result.Rows, row => row.Kind == UnifiedRowKind.Changed);
         Assert.Equal("North", changed.Cells[0].OldValue);
         Assert.Equal("North", changed.Cells[1].OldValue);
@@ -169,7 +168,4 @@ public sealed class WorksheetDiffEngineTests
         }
         return new WorksheetGrid("test.xlsx", "Sheet1", values.Length, maxColumn, rows, []);
     }
-
-    private static WorksheetGrid GridWithMerges(MergedCellRange[] mergedRanges, params string?[][] values) =>
-        Grid(values) with { MergedRanges = mergedRanges };
 }
